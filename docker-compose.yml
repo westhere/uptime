@@ -1,0 +1,22 @@
+services:
+  mariadb:
+    image: mariadb:11
+    container_name: void_uptime_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: void_uptime
+      MYSQL_USER: void_uptime
+      MYSQL_PASSWORD: void_uptime_secret
+    ports:
+      - "3307:3306"
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  mariadb_data:
