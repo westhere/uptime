@@ -121,7 +121,7 @@ class InvitationController extends Controller
 
     public function confirm(Request $request, string $token): RedirectResponse
     {
-        $invitation = Invitation::where('token', $token)->firstOrFail();
+        $invitation = Invitation::with('monitor')->where('token', $token)->firstOrFail();
 
         if ($invitation->isExpired() || $invitation->isAccepted()) {
             return redirect()->route('dashboard');
@@ -145,7 +145,7 @@ class InvitationController extends Controller
 
         $invitation->update(['accepted_at' => now()]);
 
-        return redirect()->route('monitors.show', $invitation->monitor_id)
+        return redirect()->route('monitors.show', $invitation->monitor->public_id)
             ->with('success', 'Invitation accepted. Welcome to the monitor!');
     }
 

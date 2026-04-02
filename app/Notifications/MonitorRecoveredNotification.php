@@ -26,7 +26,7 @@ class MonitorRecoveredNotification extends Notification implements ShouldQueue
             ->greeting('Monitor Recovered')
             ->line("Your monitor **{$this->monitor->name}** is back up and responding normally.")
             ->line("URL: {$this->monitor->url}")
-            ->action('View Monitor', url("/monitors/{$this->monitor->id}"))
+            ->action('View Monitor', route("monitors.show", $this->monitor->public_id))
             ->salutation('VOiD Uptime');
     }
 }

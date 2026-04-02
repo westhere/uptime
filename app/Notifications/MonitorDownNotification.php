@@ -27,7 +27,7 @@ class MonitorDownNotification extends Notification implements ShouldQueue
             ->line("Your monitor **{$this->monitor->name}** is currently DOWN.")
             ->line("URL: {$this->monitor->url}")
             ->line('We will notify you when it recovers.')
-            ->action('View Monitor', url("/monitors/{$this->monitor->id}"))
+            ->action('View Monitor', route("monitors.show", $this->monitor->public_id))
             ->salutation('VOiD Uptime');
     }
 }

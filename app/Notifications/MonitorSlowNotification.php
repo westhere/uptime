@@ -27,7 +27,7 @@ class MonitorSlowNotification extends Notification implements ShouldQueue
             ->line("Your monitor **{$this->monitor->name}** is responding slowly (over 15 seconds).")
             ->line("URL: {$this->monitor->url}")
             ->line('We will notify you when it returns to normal or goes down.')
-            ->action('View Monitor', url("/monitors/{$this->monitor->id}"))
+            ->action('View Monitor', route("monitors.show", $this->monitor->public_id))
             ->salutation('VOiD Uptime');
     }
 }
