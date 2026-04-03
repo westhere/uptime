@@ -5,7 +5,7 @@ import { useState } from 'react';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
     PieChart, Pie, Legend,
-    LineChart, Line, ReferenceLine,
+    ComposedChart, Line, Area, ReferenceLine,
 } from 'recharts';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -42,6 +42,14 @@ interface TimelineBucket {
     avg_response_ms: number | null;
 }
 
+interface ResponseBucket {
+    bucket: string;
+    label: string;
+    avg_response_ms: number;
+    min_response_ms: number;
+    max_response_ms: number;
+}
+
 interface Incident {
     id: number;
     type: 'down' | 'slow';
@@ -54,6 +62,7 @@ interface Props {
     monitor: Monitor;
     stats: Stats;
     timeline: TimelineBucket[];
+    response_timeline: ResponseBucket[];
     incidents: Incident[];
     preset: string;
     range_from: string;
@@ -136,10 +145,15 @@ function UptimeTooltip({ active, payload, label }: any) {
 // Custom tooltip for response time chart
 function ResponseTooltip({ active, payload, label }: any) {
     if (!active || !payload?.length) return null;
+    const avg = payload.find((p: any) => p.dataKey === 'avg_response_ms');
+    const min = payload.find((p: any) => p.dataKey === 'min_response_ms');
+    const max = payload.find((p: any) => p.dataKey === 'max_response_ms');
     return (
         <div className="bg-gray-900 text-white text-xs rounded px-3 py-2 shadow-lg">
             <p className="font-medium mb-1">{label}</p>
-            <p>Avg: {payload[0].value}ms</p>
+            {avg && <p>Avg: {avg.value}ms</p>}
+            {min && <p className="text-gray-300">Min: {min.value}ms</p>}
+            {max && <p className="text-gray-300">Max: {max.value}ms</p>}
         </div>
     );
 }
@@ -147,7 +161,7 @@ function ResponseTooltip({ active, payload, label }: any) {
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export default function ReportShow({
-    monitor, stats, timeline, incidents,
+    monitor, stats, timeline, response_timeline, incidents,
     preset, range_from, range_to, is_custom,
 }: Props) {
     const [showCustom, setShowCustom] = useState(is_custom);
@@ -178,7 +192,7 @@ export default function ReportShow({
     ].filter(d => d.value > 0);
 
     // Response time data — only buckets with data
-    const responseData = timeline.filter(t => t.avg_response_ms !== null);
+    const responseData = response_timeline;
 
     const bucketLabel = timeline[0]?.bucket_label ?? 'period';
 
@@ -377,8 +391,8 @@ export default function ReportShow({
                             {/* ── Response time line chart ── */}
                             {responseData.length > 0 && (
                                 <SectionCard title="Response time trend (ms)">
-                                    <ResponsiveContainer width="100%" height={220}>
-                                        <LineChart data={responseData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+                                    <ResponsiveContainer width="100%" height={240}>
+                                        <ComposedChart data={responseData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
                                             <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
                                             <XAxis dataKey="label" tick={{ fontSize: 11 }} interval="preserveStartEnd" />
                                             <YAxis tick={{ fontSize: 11 }} />
@@ -389,6 +403,30 @@ export default function ReportShow({
                                                 strokeDasharray="4 4"
                                                 label={{ value: 'Slow (15s)', position: 'insideTopRight', fontSize: 10, fill: '#ef4444' }}
                                             />
+                                            {/* Shaded min–max band */}
+                                            <Area
+                                                type="monotone"
+                                                dataKey="max_response_ms"
+                                                stroke="none"
+                                                fill="#6366f1"
+                                                fillOpacity={0.08}
+                                                legendType="none"
+                                                dot={false}
+                                                activeDot={false}
+                                                tooltipType="none"
+                                            />
+                                            <Area
+                                                type="monotone"
+                                                dataKey="min_response_ms"
+                                                stroke="none"
+                                                fill="#ffffff"
+                                                fillOpacity={1}
+                                                legendType="none"
+                                                dot={false}
+                                                activeDot={false}
+                                                tooltipType="none"
+                                            />
+                                            {/* Avg line */}
                                             <Line
                                                 type="monotone"
                                                 dataKey="avg_response_ms"
@@ -397,9 +435,11 @@ export default function ReportShow({
                                                 dot={false}
                                                 activeDot={{ r: 4 }}
                                             />
-                                        </LineChart>
+                                        </ComposedChart>
                                     </ResponsiveContainer>
-                                    <p className="text-xs text-gray-400 mt-2">Average response time per {bucketLabel}. Red line = slow threshold (15s).</p>
+                                    <p className="text-xs text-gray-400 mt-2">
+                                        Solid line = avg response. Shaded band = min–max range. Red line = slow threshold (15s).
+                                    </p>
                                 </SectionCard>
                             )}
                         </>

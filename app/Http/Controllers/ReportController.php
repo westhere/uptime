@@ -105,6 +105,7 @@ class ReportController extends Controller
                 'total_downtime_seconds' => $totalDowntimeSeconds,
             ],
             'timeline' => $this->buildTimeline($checks, $from, $to),
+            'response_timeline' => $this->buildResponseTimeline($checks, $from, $to),
             'incidents' => $incidents->map(fn ($i) => [
                 'id'               => $i->id,
                 'type'             => $i->type,
@@ -178,6 +179,53 @@ class ReportController extends Controller
                 'avg_response_ms' => $avgResp ? (int) round($avgResp) : null,
             ];
         })->values()->toArray();
+    }
+
+    /**
+     * Finer-grained timeline purely for the response time chart:
+     *   ≤ 31 days  → hourly buckets
+     *   ≤ 90 days  → 4-hourly buckets
+     *   > 90 days  → daily buckets
+     */
+    private function buildResponseTimeline($checks, Carbon $from, Carbon $to): array
+    {
+        if ($checks->isEmpty()) {
+            return [];
+        }
+
+        $days = (int) ceil($from->diffInDays($to));
+
+        if ($days <= 31) {
+            $grouped  = $checks->groupBy(fn ($c) => $c->checked_at->format('Y-m-d H:00:00'));
+            $formatFn = fn ($b) => Carbon::parse($b)->format('M j H:i');
+        } elseif ($days <= 90) {
+            $grouped  = $checks->groupBy(function ($c) {
+                $block = (int) floor((int) $c->checked_at->format('H') / 4) * 4;
+                return $c->checked_at->format('Y-m-d ') . str_pad($block, 2, '0', STR_PAD_LEFT) . ':00:00';
+            });
+            $formatFn = fn ($b) => Carbon::parse($b)->format('M j H:i');
+        } else {
+            $grouped  = $checks->groupBy(fn ($c) => $c->checked_at->format('Y-m-d'));
+            $formatFn = fn ($b) => Carbon::parse($b)->format('M j');
+        }
+
+        return $grouped
+            ->map(function ($bucketChecks, $bucket) use ($formatFn) {
+                $withTime = $bucketChecks->whereNotNull('response_time_ms');
+                if ($withTime->isEmpty()) {
+                    return null;
+                }
+                return [
+                    'bucket'          => $bucket,
+                    'label'           => $formatFn($bucket),
+                    'avg_response_ms' => (int) round($withTime->avg('response_time_ms')),
+                    'min_response_ms' => (int) $withTime->min('response_time_ms'),
+                    'max_response_ms' => (int) $withTime->max('response_time_ms'),
+                ];
+            })
+            ->filter()
+            ->values()
+            ->toArray();
     }
 
     private function bulkStats(array $monitorIds, Carbon $from, Carbon $to): array
