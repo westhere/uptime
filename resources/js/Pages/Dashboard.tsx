@@ -2,15 +2,19 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import StatusBadge from '@/Components/StatusBadge';
 import { Head, Link } from '@inertiajs/react';
 
+interface TimelineBucket {
+    status: 'up' | 'down' | 'slow';
+    uptime_pct: number;
+}
+
 interface Monitor {
-    id: number;
+    id: string;
     name: string;
     url: string;
     last_status: 'up' | 'down' | 'slow' | 'pending';
-    last_checked_at: string | null;
-    frequency_minutes: number;
     is_active: boolean;
     has_open_incident: boolean;
+    timeline: TimelineBucket[];
     permission?: string;
     owner?: string;
 }
@@ -18,6 +22,31 @@ interface Monitor {
 interface Props {
     ownedMonitors: Monitor[];
     sharedMonitors: Monitor[];
+}
+
+const statusColor: Record<string, string> = {
+    up:   'bg-green-500',
+    slow: 'bg-yellow-400',
+    down: 'bg-red-500',
+};
+
+function MiniTimeline({ timeline }: { timeline: TimelineBucket[] }) {
+    if (timeline.length === 0) {
+        return <span className="text-xs text-gray-400">No data</span>;
+    }
+
+    return (
+        <div className="flex gap-px h-8 items-end w-full">
+            {timeline.map((t, i) => (
+                <div
+                    key={i}
+                    title={`${t.uptime_pct}% uptime`}
+                    className={`flex-1 rounded-sm ${statusColor[t.status]} opacity-80`}
+                    style={{ height: `${Math.max(20, t.uptime_pct)}%` }}
+                />
+            ))}
+        </div>
+    );
 }
 
 function MonitorRow({ monitor, showOwner = false }: { monitor: Monitor; showOwner?: boolean }) {
@@ -33,13 +62,8 @@ function MonitorRow({ monitor, showOwner = false }: { monitor: Monitor; showOwne
             <td className="px-6 py-4 whitespace-nowrap">
                 <StatusBadge status={monitor.last_status} />
             </td>
-            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {monitor.last_checked_at
-                    ? new Date(monitor.last_checked_at).toLocaleString()
-                    : 'Never'}
-            </td>
-            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                Every {monitor.frequency_minutes}m
+            <td className="px-6 py-4 w-full">
+                <MiniTimeline timeline={monitor.timeline} />
             </td>
             <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
                 <Link
@@ -82,11 +106,8 @@ function MonitorTable({
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Status
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Last Checked
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Frequency
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-full">
+                            Last 6 hours
                         </th>
                         <th className="relative px-6 py-3">
                             <span className="sr-only">Actions</span>

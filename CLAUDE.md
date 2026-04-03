@@ -89,7 +89,7 @@ app/
 resources/js/
   Pages/
     Home.tsx                             # Public marketing homepage
-    Dashboard.tsx                        # My Monitors + Shared With Me tables
+    Dashboard.tsx                        # My Monitors + Shared With Me tables (with 24h mini-timeline per monitor)
     Monitors/Show.tsx                    # Uptime %, timeline, incidents, notification prefs
     Monitors/Create.tsx                  # Add monitor form
     Monitors/Edit.tsx                    # Edit monitor form
