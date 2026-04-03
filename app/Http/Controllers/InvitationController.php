@@ -27,6 +27,7 @@ class InvitationController extends Controller
                 'id' => $i->id,
                 'email' => $i->email,
                 'permission' => $i->permission,
+                'view_reports' => (bool) $i->view_reports,
                 'is_accepted' => $i->isAccepted(),
                 'is_expired' => $i->isExpired(),
                 'is_pending' => $i->isPending(),
@@ -43,6 +44,7 @@ class InvitationController extends Controller
                 'name' => $s->user->name,
                 'email' => $s->user->email,
                 'permission' => $s->permission,
+                'view_reports' => (bool) $s->view_reports,
             ]);
 
         return Inertia::render('Monitors/Invitations', [
@@ -62,6 +64,7 @@ class InvitationController extends Controller
         $validated = $request->validate([
             'email' => ['required', 'email'],
             'permission' => ['required', 'in:view,edit'],
+            'view_reports' => ['boolean'],
         ]);
 
         // Prevent inviting the owner
@@ -85,6 +88,7 @@ class InvitationController extends Controller
             'invited_by' => $request->user()->id,
             'email' => $validated['email'],
             'permission' => $validated['permission'],
+            'view_reports' => $validated['view_reports'] ?? false,
             'token' => Invitation::generateToken(),
             'expires_at' => now()->addDays(7),
         ]);
@@ -135,7 +139,7 @@ class InvitationController extends Controller
 
         MonitorShare::updateOrCreate(
             ['monitor_id' => $invitation->monitor_id, 'user_id' => $user->id],
-            ['permission' => $invitation->permission]
+            ['permission' => $invitation->permission, 'view_reports' => $invitation->view_reports]
         );
 
         NotificationPreference::firstOrCreate(
@@ -155,6 +159,7 @@ class InvitationController extends Controller
 
         $validated = $request->validate([
             'permission' => ['required', 'in:view,edit'],
+            'view_reports' => ['boolean'],
         ]);
 
         $share->update($validated);

@@ -13,6 +13,7 @@ class Invitation extends Model
         'invited_by',
         'email',
         'permission',
+        'view_reports',
         'token',
         'accepted_at',
         'expires_at',

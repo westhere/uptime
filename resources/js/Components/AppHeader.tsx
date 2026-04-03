@@ -31,6 +31,12 @@ export default function AppHeader() {
                                 >
                                     Dashboard
                                 </NavLink>
+                                <NavLink
+                                    href={route('reports.index')}
+                                    active={route().current('reports.*')}
+                                >
+                                    Reports
+                                </NavLink>
                                 {user.is_admin && (
                                     <NavLink
                                         href={route('admin.dashboard')}
@@ -106,6 +112,9 @@ export default function AppHeader() {
                     <div className="space-y-1 pb-3 pt-2 px-4">
                         <ResponsiveNavLink href={route('dashboard')} active={route().current('dashboard')}>
                             Dashboard
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink href={route('reports.index')} active={route().current('reports.*')}>
+                            Reports
                         </ResponsiveNavLink>
                         {user.is_admin && (
                             <ResponsiveNavLink href={route('admin.dashboard')} active={route().current('admin.*')}>

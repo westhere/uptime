@@ -14,6 +14,7 @@ interface Monitor {
     uptime_percentage: number;
     is_owner: boolean;
     can_edit: boolean;
+    can_view_reports: boolean;
 }
 
 interface TimelineBucket {
@@ -147,6 +148,14 @@ export default function Show({
                         <StatusBadge status={monitor.last_status} />
                     </div>
                     <div className="flex items-center gap-2">
+                        {monitor.can_view_reports && (
+                            <Link
+                                href={route('monitors.report', monitor.id)}
+                                className="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-700 border border-gray-300 hover:bg-gray-50"
+                            >
+                                Report
+                            </Link>
+                        )}
                         {monitor.can_edit && (
                             <Link
                                 href={route('monitors.edit', monitor.id)}

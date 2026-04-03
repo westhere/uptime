@@ -69,6 +69,7 @@ app/
     DashboardController.php               # Single-action: owned + shared monitors
     MonitorController.php                 # CRUD + notification preferences
     InvitationController.php             # Send/accept/manage invitations and shares
+    ReportController.php                  # Reports overview (index) + single monitor detail (show)
     AdminController.php                  # Admin panel: stats + remove users
   Http/Middleware/AdminMiddleware.php     # Guards /admin routes (is_admin = true)
   Jobs/CheckMonitorJob.php               # Core monitoring logic — HTTP check, status, incidents, notifications
@@ -90,7 +91,9 @@ resources/js/
   Pages/
     Home.tsx                             # Public marketing homepage
     Dashboard.tsx                        # My Monitors + Shared With Me tables (with 24h mini-timeline per monitor)
-    Monitors/Show.tsx                    # Uptime %, timeline, incidents, notification prefs
+    Monitors/Show.tsx                    # Uptime %, timeline, incidents, notification prefs. Has "Report" button if can_view_reports
+    Reports/Index.tsx                    # Reports overview: range picker + per-monitor stat cards
+    Reports/Show.tsx                     # Single monitor report: 3 Recharts charts + incidents table + print/PDF
     Monitors/Create.tsx                  # Add monitor form
     Monitors/Edit.tsx                    # Edit monitor form
     Monitors/Invitations.tsx             # Manage access / send invites
@@ -175,9 +178,20 @@ A `MonitorIncident` is opened when status transitions from healthy to unhealthy,
 Sent only on status *change*, not on every check. The job compares `last_status` before deciding whether to send. Users with no `NotificationPreference` row receive all notifications by default (owner defaults to all-on).
 
 ### Sharing model
-- `monitor_shares` links a monitor to a user with `view | edit` permission.
-- `invitations` are separate — email + token until accepted, then a `MonitorShare` is created.
+- `monitor_shares` links a monitor to a user with `view | edit` permission, plus `view_reports` boolean (default false).
+- `invitations` are separate — email + token until accepted, then a `MonitorShare` is created. Invitations also carry `view_reports`.
 - Only the monitor **owner** can send invitations and manage shares. Edit-permission users can edit monitor settings but cannot invite others.
+- When accepting an invite, `view_reports` is copied from the invitation to the resulting `MonitorShare`.
+- Owners can toggle `view_reports` on existing shares from the Manage Access page.
+
+### Reports
+- `GET /reports` — overview of all monitors the user owns or has `view_reports` access to. Shows per-monitor summary cards (uptime %, avg response, incident count) for the selected period.
+- `GET /monitors/{monitor}/report` — detailed single-monitor report. Guarded by `MonitorPolicy::viewReports`.
+- Range presets: 30 / 90 / 180 / 365 days, plus custom date range (`?from=YYYY-MM-DD&to=YYYY-MM-DD`).
+- Charts (Recharts): uptime % bar chart per period, status donut (up/slow/down), response time line with 15s reference line.
+- Timeline bucket sizes for reports: ≤31 days = daily, ≤90 days = weekly, >90 days = monthly.
+- Print/PDF: `window.print()` button. Controls are hidden with `print:hidden`; a print-only header shows monitor name and date range.
+- Recharts installed via `npm install recharts --legacy-peer-deps`.
 
 ### Data retention
 `php artisan monitors:prune` (scheduled daily) deletes `monitor_checks` and `monitor_incidents` older than 4 years for GDPR compliance.

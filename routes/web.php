@@ -5,6 +5,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\MonitorController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ReportController;
 use App\Http\Middleware\AdminMiddleware;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -36,6 +37,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('invitations.accept');
     Route::post('/invitations/{token}/confirm', [InvitationController::class, 'confirm'])
         ->name('invitations.confirm');
+
+    // Reports
+    Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+    Route::get('/monitors/{monitor}/report', [ReportController::class, 'show'])->name('monitors.report');
 
     // Profile
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

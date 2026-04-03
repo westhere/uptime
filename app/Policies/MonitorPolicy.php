@@ -35,4 +35,16 @@ class MonitorPolicy
     {
         return $monitor->user_id === $user->id;
     }
+
+    public function viewReports(User $user, Monitor $monitor): bool
+    {
+        if ($monitor->user_id === $user->id) {
+            return true;
+        }
+
+        return MonitorShare::where('monitor_id', $monitor->id)
+            ->where('user_id', $user->id)
+            ->where('view_reports', true)
+            ->exists();
+    }
 }

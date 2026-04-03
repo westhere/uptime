@@ -11,6 +11,7 @@ class MonitorShare extends Model
         'monitor_id',
         'user_id',
         'permission',
+        'view_reports',
     ];
 
     public function monitor(): BelongsTo

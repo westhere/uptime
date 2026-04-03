@@ -57,6 +57,7 @@ class MonitorController extends Controller
             ->first();
 
         $canEdit = $isOwner || ($share && $share->canEdit());
+        $canViewReports = $isOwner || ($share && $share->view_reports);
 
         $notifPref = NotificationPreference::firstOrCreate(
             ['user_id' => $user->id, 'monitor_id' => $monitor->id],
@@ -110,6 +111,7 @@ class MonitorController extends Controller
                 'uptime_percentage' => $monitor->uptimePercentage($hours),
                 'is_owner' => $isOwner,
                 'can_edit' => $canEdit,
+                'can_view_reports' => $canViewReports,
             ],
             'timeline' => $timeline,
             'incidents' => $incidents,
