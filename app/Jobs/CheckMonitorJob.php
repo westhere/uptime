@@ -40,7 +40,7 @@ class CheckMonitorJob implements ShouldQueue
             $responseTimeMs = (int) ((microtime(true) - $startTime) * 1000);
             $httpStatusCode = $response->status();
 
-            if (! $response->successful()) {
+            if ($response->status() !== 200) {
                 $status = 'down';
                 $errorMessage = "HTTP {$httpStatusCode}";
             } elseif ($responseTimeMs >= 15000) {

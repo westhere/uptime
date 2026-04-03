@@ -69,6 +69,18 @@ class CheckMonitorJobTest extends TestCase
         ]);
     }
 
+    public function test_non_200_status_is_classed_as_down(): void
+    {
+        Http::fake(['*' => Http::response('Created', 201)]);
+
+        $monitor = $this->makeMonitor(['last_status' => 'up']);
+
+        CheckMonitorJob::dispatchSync($monitor);
+
+        $monitor->refresh();
+        $this->assertEquals('down', $monitor->last_status);
+    }
+
     public function test_down_site_creates_incident(): void
     {
         Http::fake(['*' => Http::response('Error', 500)]);
