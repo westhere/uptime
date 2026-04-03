@@ -63,10 +63,28 @@ class MonitorController extends Controller
             ['notify_down' => true, 'notify_slow' => true, 'notify_recover' => true]
         );
 
-        $hoursParam = (int) request('hours', 12);
-        $hours = in_array($hoursParam, [1, 3, 6, 12, 24, 48, 168, 720]) ? $hoursParam : 12;
+        // Support custom date range via from/to params, falling back to preset hours
+        $fromParam = request('from');
+        $toParam   = request('to');
 
-        $timeline = $this->buildTimeline($monitor, $hours);
+        if ($fromParam && $toParam) {
+            $from  = \Carbon\Carbon::parse($fromParam)->startOfMinute();
+            $to    = \Carbon\Carbon::parse($toParam)->startOfMinute();
+            // Clamp: to cannot be in the future, from must be before to
+            $to    = $to->isFuture() ? now() : $to;
+            $from  = $from->gte($to) ? $to->copy()->subHours(1) : $from;
+            $hours = (int) ceil($from->diffInHours($to));
+            $hours = max($hours, 1);
+            $isCustom = true;
+        } else {
+            $hoursParam = (int) request('hours', 12);
+            $hours = in_array($hoursParam, [1, 3, 6, 12, 24, 48, 168, 720]) ? $hoursParam : 12;
+            $from  = now()->subHours($hours);
+            $to    = now();
+            $isCustom = false;
+        }
+
+        $timeline = $this->buildTimeline($monitor, $from, $to);
 
         $incidents = $monitor->incidents()
             ->orderByDesc('started_at')
@@ -96,6 +114,9 @@ class MonitorController extends Controller
             'timeline' => $timeline,
             'incidents' => $incidents,
             'hours' => $hours,
+            'range_from' => $from->toISOString(),
+            'range_to' => $to->toISOString(),
+            'is_custom' => $isCustom,
             'notification_preferences' => [
                 'notify_down' => $notifPref->notify_down,
                 'notify_slow' => $notifPref->notify_slow,
@@ -162,12 +183,14 @@ class MonitorController extends Controller
         return back()->with('success', 'Notification preferences updated.');
     }
 
-    private function buildTimeline(Monitor $monitor, int $hours): array
+    private function buildTimeline(Monitor $monitor, \Carbon\Carbon $from, \Carbon\Carbon $to): array
     {
-        $from = now()->subHours($hours);
+        $hours = (int) ceil($from->diffInHours($to));
+        $hours = max($hours, 1);
 
         $checks = $monitor->checks()
             ->where('checked_at', '>=', $from)
+            ->where('checked_at', '<=', $to)
             ->orderBy('checked_at')
             ->get();
 
@@ -175,15 +198,42 @@ class MonitorController extends Controller
             return [];
         }
 
-        // Aggregate by hour
-        $grouped = $checks->groupBy(fn ($c) => $c->checked_at->format('Y-m-d H:00:00'));
+        // Choose bucket size based on timeframe so shorter ranges show finer detail
+        if ($hours <= 1) {
+            $format = 'Y-m-d H:i:00';      // per minute
+            $bucketLabel = 'minute';
+        } elseif ($hours <= 6) {
+            $format = 'Y-m-d H:i:00';      // per 5-minute slot
+            $bucketLabel = '5 minutes';
+            // Round down to nearest 5-minute boundary
+            $grouped = $checks->groupBy(function ($c) {
+                $floored = (int) floor((int) $c->checked_at->format('i') / 5) * 5;
+                return $c->checked_at->format('Y-m-d H:') . str_pad($floored, 2, '0', STR_PAD_LEFT) . ':00';
+            });
+        } elseif ($hours <= 24) {
+            $format = 'Y-m-d H:00:00';     // per 15-minute slot
+            $bucketLabel = '15 minutes';
+            $grouped = $checks->groupBy(function ($c) {
+                $floored = (int) floor((int) $c->checked_at->format('i') / 15) * 15;
+                return $c->checked_at->format('Y-m-d H:') . str_pad($floored, 2, '0', STR_PAD_LEFT) . ':00';
+            });
+        } else {
+            $format = 'Y-m-d H:00:00';     // per hour
+            $bucketLabel = 'hour';
+            $grouped = $checks->groupBy(fn ($c) => $c->checked_at->format($format));
+        }
 
-        return $grouped->map(function ($hourChecks, $hour) {
-            $total = $hourChecks->count();
-            $up = $hourChecks->where('status', 'up')->count();
-            $slow = $hourChecks->where('status', 'slow')->count();
-            $down = $hourChecks->where('status', 'down')->count();
-            $avgResponse = $hourChecks->whereNotNull('response_time_ms')->avg('response_time_ms');
+        // For per-minute case (hours <= 1), use simple format groupBy
+        if ($hours <= 1) {
+            $grouped = $checks->groupBy(fn ($c) => $c->checked_at->format($format));
+        }
+
+        return $grouped->map(function ($bucketChecks, $bucket) use ($bucketLabel) {
+            $total = $bucketChecks->count();
+            $up = $bucketChecks->where('status', 'up')->count();
+            $slow = $bucketChecks->where('status', 'slow')->count();
+            $down = $bucketChecks->where('status', 'down')->count();
+            $avgResponse = $bucketChecks->whereNotNull('response_time_ms')->avg('response_time_ms');
 
             $dominantStatus = 'up';
             if ($down > 0) {
@@ -193,7 +243,8 @@ class MonitorController extends Controller
             }
 
             return [
-                'hour' => $hour,
+                'bucket' => $bucket,
+                'bucket_label' => $bucketLabel,
                 'status' => $dominantStatus,
                 'up' => $up,
                 'slow' => $slow,

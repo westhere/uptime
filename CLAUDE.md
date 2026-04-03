@@ -136,6 +136,31 @@ There is no separate `/register` page. The login page (`Pages/Auth/Login.tsx`) h
 ### Monitor URLs use `public_id`, not `id`
 Monitor primary keys are integers internally (for FK performance), but all routes use a 12-character random `public_id` (e.g. `/monitors/aB3kLmNx9Qrz`). The model overrides `getRouteKeyName()` to return `public_id`. Passing a numeric ID to any monitor route will 404. All controllers pass `$monitor->public_id` as the `id` field in Inertia props — never `$monitor->id`.
 
+### Timeline granularity (dynamic bucket size)
+The `buildTimeline(Monitor $monitor, Carbon $from, Carbon $to)` method in `MonitorController` adjusts bucket size based on the selected timeframe so shorter ranges show finer detail:
+
+| Timeframe | Bucket size |
+|---|---|
+| ≤ 1 hour | Per minute |
+| 2–6 hours | Per 5 minutes |
+| 7–24 hours | Per 15 minutes |
+| 25+ hours | Per hour |
+
+Each bucket includes `bucket`, `bucket_label`, `status`, `up/slow/down` counts, `uptime_pct`, and `avg_response_ms`. The frontend displays a hint below the chart title ("Each bar = 1 minute" etc.) and uses `bucket_label` from the first item.
+
+### Custom date range for timeline
+The timeline supports both preset and custom time ranges:
+
+- **Presets** (`?hours=N`): 1, 3, 6, 12, 24, 48, 168 (7d), 720 (30d). Invalid values default to 12.
+- **Custom** (`?from=YYYY-MM-DDTHH:mm&to=YYYY-MM-DDTHH:mm`): arbitrary range. Backend clamps `to` to `now()` if in future, and shifts `from` back 1 hour if it equals or exceeds `to`.
+
+The `show()` method passes `range_from` (ISO), `range_to` (ISO), and `is_custom` (bool) as Inertia props. The frontend (`Monitors/Show.tsx`) uses these to:
+- Pre-populate the datetime-local inputs when the page loads with a custom range
+- Show the "Custom range…" option as selected in the dropdown
+- Reveal/hide the inline From/To inputs + Apply button based on `showCustom` state
+
+The `toDatetimeLocal(iso)` helper converts ISO strings to `YYYY-MM-DDTHH:mm` for datetime-local inputs.
+
 ### Monitor status thresholds
 - HTTP 200 + response < 15 seconds = **up**
 - HTTP 200 + response 15–30 seconds = **slow**
