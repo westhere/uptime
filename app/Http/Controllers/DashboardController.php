@@ -36,7 +36,7 @@ class DashboardController extends Controller
     private function formatMonitor($monitor): array
     {
         return [
-            'id' => $monitor->id,
+            'id' => $monitor->public_id,
             'name' => $monitor->name,
             'url' => $monitor->url,
             'last_status' => $monitor->last_status,

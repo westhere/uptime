@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(php artisan:*)"
+      "Bash(php artisan:*)",
+      "Bash(curl -s -o /dev/null -w \"Vite: %{http_code}\\\\n\" http://localhost:5173/@vite/client)"
     ]
   }
 }

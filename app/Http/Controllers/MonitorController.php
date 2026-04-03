@@ -82,7 +82,7 @@ class MonitorController extends Controller
 
         return Inertia::render('Monitors/Show', [
             'monitor' => [
-                'id' => $monitor->id,
+                'id' => $monitor->public_id,
                 'name' => $monitor->name,
                 'url' => $monitor->url,
                 'last_status' => $monitor->last_status,
@@ -110,7 +110,7 @@ class MonitorController extends Controller
 
         return Inertia::render('Monitors/Edit', [
             'monitor' => [
-                'id' => $monitor->id,
+                'id' => $monitor->public_id,
                 'name' => $monitor->name,
                 'url' => $monitor->url,
                 'frequency_minutes' => $monitor->frequency_minutes,

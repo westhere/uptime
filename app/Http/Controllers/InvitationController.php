@@ -47,7 +47,7 @@ class InvitationController extends Controller
 
         return Inertia::render('Monitors/Invitations', [
             'monitor' => [
-                'id' => $monitor->id,
+                'id' => $monitor->public_id,
                 'name' => $monitor->name,
             ],
             'invitations' => $invitations,
