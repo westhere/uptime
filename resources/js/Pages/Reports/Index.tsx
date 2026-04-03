@@ -1,7 +1,9 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import StatusBadge from '@/Components/StatusBadge';
 import { Head, Link, router } from '@inertiajs/react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+
+const RELOAD_INTERVAL_MS = 60_000;
 
 interface MonitorSummary {
     id: string;
@@ -41,8 +43,19 @@ export default function ReportsIndex({ monitors, preset, range_from, range_to, i
     const [showCustom, setShowCustom] = useState(is_custom);
     const [customFrom, setCustomFrom] = useState(range_from);
     const [customTo, setCustomTo]     = useState(range_to);
+    const [lastUpdated, setLastUpdated] = useState(new Date());
 
     const today = new Date().toISOString().slice(0, 10);
+
+    useEffect(() => {
+        const timer = setInterval(() => {
+            router.reload({
+                only: ['monitors'],
+                onSuccess: () => setLastUpdated(new Date()),
+            });
+        }, RELOAD_INTERVAL_MS);
+        return () => clearInterval(timer);
+    }, []);
 
     function handlePresetChange(e: React.ChangeEvent<HTMLSelectElement>) {
         const val = e.target.value;
@@ -107,6 +120,10 @@ export default function ReportsIndex({ monitors, preset, range_from, range_to, i
                                 </button>
                             </form>
                         )}
+                        <span className="text-xs text-gray-400 print:hidden">
+                            Updated {lastUpdated.toLocaleTimeString()}
+                        </span>
+
                         <button
                             onClick={() => window.print()}
                             className="inline-flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"

@@ -1,7 +1,9 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import StatusBadge from '@/Components/StatusBadge';
 import { Head, Link, router, useForm } from '@inertiajs/react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+
+const RELOAD_INTERVAL_MS = 30_000;
 
 interface Monitor {
     id: string;
@@ -93,8 +95,19 @@ export default function Show({
     const [showCustom, setShowCustom] = useState(is_custom);
     const [customFrom, setCustomFrom] = useState(toDatetimeLocal(range_from));
     const [customTo, setCustomTo]     = useState(toDatetimeLocal(range_to));
+    const [lastUpdated, setLastUpdated] = useState(new Date());
 
     const notifForm = useForm(notification_preferences);
+
+    useEffect(() => {
+        const timer = setInterval(() => {
+            router.reload({
+                only: ['monitor', 'timeline', 'incidents'],
+                onSuccess: () => setLastUpdated(new Date()),
+            });
+        }, RELOAD_INTERVAL_MS);
+        return () => clearInterval(timer);
+    }, []);
 
     function handlePresetChange(e: React.ChangeEvent<HTMLSelectElement>) {
         const val = e.target.value;
@@ -148,6 +161,9 @@ export default function Show({
                         <StatusBadge status={monitor.last_status} />
                     </div>
                     <div className="flex items-center gap-2">
+                        <span className="text-xs text-gray-400 print:hidden">
+                            Updated {lastUpdated.toLocaleTimeString()}
+                        </span>
                         {monitor.can_view_reports && (
                             <Link
                                 href={route('monitors.report', monitor.id)}
