@@ -46,7 +46,10 @@ export default function Edit({ monitor }: { monitor: MonitorData }) {
 
             <div className="py-12">
                 <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8">
-                    <div className="bg-white shadow rounded-lg">
+                    <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                        <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                            <p className="text-sm text-gray-500">Update the monitor settings below.</p>
+                        </div>
                         <form onSubmit={submit} className="p-6 space-y-6">
                             <div>
                                 <InputLabel htmlFor="name" value="Monitor Name" />

@@ -32,9 +32,9 @@ interface Props {
     users: Pagination<UserRow>;
 }
 
-function StatCard({ label, value, className = '' }: { label: string; value: number; className?: string }) {
+function StatCard({ label, value, accent = '' }: { label: string; value: number; accent?: string }) {
     return (
-        <div className={`bg-white shadow rounded-lg p-4 ${className}`}>
+        <div className={`bg-white rounded-xl border border-gray-100 shadow-sm p-4 ${accent ? `border-t-2 ${accent}` : 'border-t-2 border-indigo-500'}`}>
             <p className="text-sm text-gray-500">{label}</p>
             <p className="text-3xl font-bold text-gray-900 mt-1">{value}</p>
         </div>
@@ -60,19 +60,19 @@ export default function AdminDashboard({ stats, users }: Props) {
                     <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
                         <StatCard label="Total Users" value={stats.total_users} />
                         <StatCard label="Total Monitors" value={stats.total_monitors} />
-                        <StatCard label="Active Monitors" value={stats.active_monitors} />
-                        <StatCard label="Monitors Down" value={stats.monitors_down} className={stats.monitors_down > 0 ? 'border-l-4 border-red-500' : ''} />
-                        <StatCard label="Monitors Slow" value={stats.monitors_slow} className={stats.monitors_slow > 0 ? 'border-l-4 border-yellow-400' : ''} />
+                        <StatCard label="Active Monitors" value={stats.active_monitors} accent="border-green-500" />
+                        <StatCard label="Monitors Down" value={stats.monitors_down} accent={stats.monitors_down > 0 ? 'border-red-500' : 'border-gray-200'} />
+                        <StatCard label="Monitors Slow" value={stats.monitors_slow} accent={stats.monitors_slow > 0 ? 'border-yellow-400' : 'border-gray-200'} />
                     </div>
 
                     {/* Users table */}
-                    <div className="bg-white shadow rounded-lg overflow-hidden">
-                        <div className="px-6 py-4 border-b border-gray-200">
+                    <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                        <div className="px-6 py-4 border-b border-gray-100">
                             <h3 className="text-lg font-medium text-gray-900">Users ({users.total})</h3>
                         </div>
                         <div className="overflow-x-auto">
                             <table className="min-w-full divide-y divide-gray-200">
-                                <thead className="bg-gray-50">
+                                <thead className="bg-gray-50/70">
                                     <tr>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             User
@@ -117,7 +117,7 @@ export default function AdminDashboard({ stats, users }: Props) {
 
                         {/* Pagination */}
                         {users.last_page > 1 && (
-                            <div className="px-6 py-4 border-t border-gray-200 flex gap-1">
+                            <div className="px-6 py-4 border-t border-gray-100 flex gap-1">
                                 {users.links.map((link, i) => (
                                     <button
                                         key={i}

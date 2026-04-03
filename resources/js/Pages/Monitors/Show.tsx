@@ -181,19 +181,19 @@ export default function Show({
                 <div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
                     {/* Stats row */}
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                        <div className="bg-white shadow rounded-lg p-4">
+                        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
                             <p className="text-sm text-gray-500">Uptime</p>
                             <p className="text-2xl font-bold text-gray-900">{monitor.uptime_percentage}%</p>
                         </div>
-                        <div className="bg-white shadow rounded-lg p-4">
+                        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
                             <p className="text-sm text-gray-500">Status</p>
                             <p className="mt-1"><StatusBadge status={monitor.last_status} /></p>
                         </div>
-                        <div className="bg-white shadow rounded-lg p-4">
+                        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
                             <p className="text-sm text-gray-500">Frequency</p>
                             <p className="text-2xl font-bold text-gray-900">{monitor.frequency_minutes}m</p>
                         </div>
-                        <div className="bg-white shadow rounded-lg p-4">
+                        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
                             <p className="text-sm text-gray-500">Last Checked</p>
                             <p className="text-sm font-medium text-gray-900 mt-1">
                                 {monitor.last_checked_at
@@ -204,7 +204,7 @@ export default function Show({
                     </div>
 
                     {/* Timeline */}
-                    <div className="bg-white shadow rounded-lg p-6">
+                    <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
                         <div className="flex flex-wrap items-start justify-between gap-3 mb-1">
                             <div>
                                 <h3 className="text-lg font-medium text-gray-900">Uptime Timeline</h3>
@@ -318,7 +318,7 @@ export default function Show({
 
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         {/* Incidents */}
-                        <div className="bg-white shadow rounded-lg p-6">
+                        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
                             <h3 className="text-lg font-medium text-gray-900 mb-4">Recent Incidents</h3>
                             {incidents.length === 0 ? (
                                 <p className="text-gray-500 text-sm">No incidents recorded.</p>
@@ -349,7 +349,7 @@ export default function Show({
                         </div>
 
                         {/* Notification preferences */}
-                        <div className="bg-white shadow rounded-lg p-6">
+                        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
                             <h3 className="text-lg font-medium text-gray-900 mb-4">Notification Preferences</h3>
                             <form onSubmit={submitNotifPrefs} className="space-y-3">
                                 {(

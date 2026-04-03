@@ -93,7 +93,7 @@ function MonitorTable({
     return (
         <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+                <thead className="bg-gray-50/70">
                     <tr>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Monitor
@@ -143,9 +143,9 @@ export default function Dashboard({ ownedMonitors, sharedMonitors }: Props) {
 
             <div className="py-12">
                 <div className="mx-auto max-w-7xl space-y-8 px-4 sm:px-6 lg:px-8">
-                    <div className="bg-white overflow-hidden shadow rounded-lg">
-                        <div className="px-6 py-4 border-b border-gray-200">
-                            <h3 className="text-lg font-medium text-gray-900">My Monitors</h3>
+                    <div className="bg-white overflow-hidden rounded-xl border border-gray-100 shadow-sm">
+                        <div className="px-6 py-4 border-b border-gray-100">
+                            <h3 className="text-base font-semibold text-gray-900">My Monitors</h3>
                         </div>
                         <MonitorTable
                             monitors={ownedMonitors}
@@ -154,9 +154,9 @@ export default function Dashboard({ ownedMonitors, sharedMonitors }: Props) {
                     </div>
 
                     {sharedMonitors.length > 0 && (
-                        <div className="bg-white overflow-hidden shadow rounded-lg">
-                            <div className="px-6 py-4 border-b border-gray-200">
-                                <h3 className="text-lg font-medium text-gray-900">Shared With Me</h3>
+                        <div className="bg-white overflow-hidden rounded-xl border border-gray-100 shadow-sm">
+                            <div className="px-6 py-4 border-b border-gray-100">
+                                <h3 className="text-base font-semibold text-gray-900">Shared With Me</h3>
                             </div>
                             <MonitorTable monitors={sharedMonitors} showOwner emptyMessage="" />
                         </div>

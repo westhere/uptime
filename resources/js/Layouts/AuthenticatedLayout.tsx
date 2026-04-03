@@ -7,12 +7,12 @@ export default function Authenticated({
     children,
 }: PropsWithChildren<{ header?: ReactNode }>) {
     return (
-        <div className="min-h-screen bg-gray-100 flex flex-col">
+        <div className="min-h-screen bg-gray-50 flex flex-col">
             <AppHeader />
 
             {header && (
-                <div className="bg-white shadow">
-                    <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+                <div className="bg-white border-b border-gray-200">
+                    <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:px-8">
                         {header}
                     </div>
                 </div>

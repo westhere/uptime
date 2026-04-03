@@ -73,7 +73,7 @@ export default function Invitations({ monitor, invitations, shares }: Props) {
             <div className="py-12">
                 <div className="mx-auto max-w-3xl space-y-8 px-4 sm:px-6 lg:px-8">
                     {/* Invite form */}
-                    <div className="bg-white shadow rounded-lg p-6">
+                    <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
                         <h3 className="text-lg font-medium text-gray-900 mb-4">Invite Someone</h3>
                         <form onSubmit={submit} className="space-y-4">
                             <div className="flex gap-3 items-end">
@@ -109,11 +109,11 @@ export default function Invitations({ monitor, invitations, shares }: Props) {
 
                     {/* Active shares */}
                     {shares.length > 0 && (
-                        <div className="bg-white shadow rounded-lg">
-                            <div className="px-6 py-4 border-b border-gray-200">
+                        <div className="bg-white rounded-xl border border-gray-100 shadow-sm">
+                            <div className="px-6 py-4 border-b border-gray-100">
                                 <h3 className="text-lg font-medium text-gray-900">People with Access</h3>
                             </div>
-                            <ul className="divide-y divide-gray-200">
+                            <ul className="divide-y divide-gray-100">
                                 {shares.map((share) => (
                                     <li key={share.id} className="px-6 py-4 flex items-center justify-between gap-4">
                                         <div>
@@ -144,11 +144,11 @@ export default function Invitations({ monitor, invitations, shares }: Props) {
 
                     {/* Pending invitations */}
                     {invitations.filter((i) => i.is_pending).length > 0 && (
-                        <div className="bg-white shadow rounded-lg">
-                            <div className="px-6 py-4 border-b border-gray-200">
+                        <div className="bg-white rounded-xl border border-gray-100 shadow-sm">
+                            <div className="px-6 py-4 border-b border-gray-100">
                                 <h3 className="text-lg font-medium text-gray-900">Pending Invitations</h3>
                             </div>
-                            <ul className="divide-y divide-gray-200">
+                            <ul className="divide-y divide-gray-100">
                                 {invitations
                                     .filter((i) => i.is_pending)
                                     .map((inv) => (
