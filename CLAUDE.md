@@ -187,6 +187,16 @@ Sent only on status *change*, not on every check. The job compares `last_status`
 ### Dashboard mini-timeline
 Each monitor row on the dashboard shows a 6-hour mini-timeline (`MiniTimeline` component in `Dashboard.tsx`). It uses 5-minute buckets, computed by a single `MonitorCheck::whereIn` bulk query in `DashboardController::buildMiniTimelines()`. Bars are colored green/yellow/red by uptime status. The "Last Checked" and "Frequency" columns were removed; the timeline takes their place.
 
+### Live reload
+All four main data pages auto-reload via `router.reload({ only: [...] })` on a `setInterval`. No full page flash — only the listed Inertia props are re-fetched. Each page shows an "Updated HH:MM:SS" timestamp in the header (hidden on print).
+
+| Page | Interval | Props reloaded |
+|---|---|---|
+| `Dashboard.tsx` | 30s | `ownedMonitors`, `sharedMonitors` |
+| `Monitors/Show.tsx` | 30s | `monitor`, `timeline`, `incidents` |
+| `Reports/Index.tsx` | 60s | `monitors` |
+| `Reports/Show.tsx` | 60s | `monitor`, `stats`, `timeline`, `response_timeline`, `incidents` |
+
 ### Reports
 - `GET /reports` — overview of all monitors the user owns or has `view_reports` access to. Shows per-monitor summary cards (uptime %, avg response, incident count) for the selected period.
 - `GET /monitors/{monitor}/report` — detailed single-monitor report. Guarded by `MonitorPolicy::viewReports`.
