@@ -90,7 +90,7 @@ app/
 resources/js/
   Pages/
     Home.tsx                             # Public marketing homepage
-    Dashboard.tsx                        # My Monitors + Shared With Me tables (with 24h mini-timeline per monitor)
+    Dashboard.tsx                        # My Monitors + Shared With Me tables (with 6h mini-timeline per monitor)
     Monitors/Show.tsx                    # Uptime %, timeline, incidents, notification prefs. Has "Report" button if can_view_reports
     Reports/Index.tsx                    # Reports overview: range picker + per-monitor stat cards
     Reports/Show.tsx                     # Single monitor report: 3 Recharts charts + incidents table + print/PDF
@@ -134,7 +134,7 @@ routes/
 There is no separate `/register` page. The login page (`Pages/Auth/Login.tsx`) has two side-by-side panels — login on the left, register on the right. GET `/register` redirects to `/login`. Both forms post to their respective backend routes as normal.
 
 ### Shared header and footer
-`AppHeader` and `AppFooter` are used by both `AuthenticatedLayout` and `GuestLayout`. The header shows the "Sign in / Get started" buttons when the user is a guest, and the nav + user dropdown when authenticated. The Admin nav link only appears when `user.is_admin === true`.
+`AppHeader` and `AppFooter` are used by both `AuthenticatedLayout` and `GuestLayout`. The header shows the "Sign in / Get started" buttons when the user is a guest, and the nav + user dropdown when authenticated. The Admin nav link only appears when `user.is_admin === true`. The header nav includes a **Reports** link pointing to `route('reports.index')`. The footer's Sign in / Register links are hidden when the user is authenticated (reads `auth.user` via `usePage()`).
 
 ### Monitor URLs use `public_id`, not `id`
 Monitor primary keys are integers internally (for FK performance), but all routes use a 12-character random `public_id` (e.g. `/monitors/aB3kLmNx9Qrz`). The model overrides `getRouteKeyName()` to return `public_id`. Passing a numeric ID to any monitor route will 404. All controllers pass `$monitor->public_id` as the `id` field in Inertia props — never `$monitor->id`.
@@ -184,14 +184,22 @@ Sent only on status *change*, not on every check. The job compares `last_status`
 - When accepting an invite, `view_reports` is copied from the invitation to the resulting `MonitorShare`.
 - Owners can toggle `view_reports` on existing shares from the Manage Access page.
 
+### Dashboard mini-timeline
+Each monitor row on the dashboard shows a 6-hour mini-timeline (`MiniTimeline` component in `Dashboard.tsx`). It uses 5-minute buckets, computed by a single `MonitorCheck::whereIn` bulk query in `DashboardController::buildMiniTimelines()`. Bars are colored green/yellow/red by uptime status. The "Last Checked" and "Frequency" columns were removed; the timeline takes their place.
+
 ### Reports
 - `GET /reports` — overview of all monitors the user owns or has `view_reports` access to. Shows per-monitor summary cards (uptime %, avg response, incident count) for the selected period.
 - `GET /monitors/{monitor}/report` — detailed single-monitor report. Guarded by `MonitorPolicy::viewReports`.
 - Range presets: 30 / 90 / 180 / 365 days, plus custom date range (`?from=YYYY-MM-DD&to=YYYY-MM-DD`).
-- Charts (Recharts): uptime % bar chart per period, status donut (up/slow/down), response time line with 15s reference line.
-- Timeline bucket sizes for reports: ≤31 days = daily, ≤90 days = weekly, >90 days = monthly.
+- Charts (Recharts):
+  - **Uptime bar chart** — `BarChart` with `Cell` colored green ≥99%, yellow ≥90%, red <90%. Buckets: daily (≤31d), weekly (≤90d), monthly (>90d).
+  - **Status donut** — `PieChart` with `Pie` innerRadius=55. Green/yellow/red slices for up/slow/down counts.
+  - **Response time chart** — `ComposedChart` with a shaded min/max band (Area components) + avg `Line` + `ReferenceLine` at y=15000 (slow threshold). Granularity: hourly (≤31d), 4-hourly (≤90d), daily (>90d). Controlled by `buildResponseTimeline()` in `ReportController`, separate from the uptime `buildTimeline()`.
+- The backend passes both `timeline` (uptime buckets) and `response_timeline` (finer-grained response data) as separate Inertia props.
 - Print/PDF: `window.print()` button. Controls are hidden with `print:hidden`; a print-only header shows monitor name and date range.
-- Recharts installed via `npm install recharts --legacy-peer-deps`.
+- Recharts + `react-is` (required peer dep) installed via `npm install recharts react-is --legacy-peer-deps`. **Do not omit `react-is`** — Recharts will crash with a dynamic import error at runtime without it.
+- `MonitorPolicy::viewReports(User $user, Monitor $monitor)` — true for owner; true for shared users with `view_reports = true` on their `MonitorShare`.
+- `Monitors/Show.tsx` shows a "Report" button in the header only when `monitor.can_view_reports` is true (passed from `MonitorController::show()`).
 
 ### Data retention
 `php artisan monitors:prune` (scheduled daily) deletes `monitor_checks` and `monitor_incidents` older than 4 years for GDPR compliance.
